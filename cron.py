@@ -11,6 +11,8 @@ from parse_rest.user import User
 import sys
 import urllib2
 
+MIN_LENGTH=10
+
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
 parse_credentials = {
@@ -111,11 +113,9 @@ def ffmpeg(video_url):
     print "Checking length of video file"
     answer = os.popen("./get_duration.sh %s/%s.mp4"%(dir_path,video_name))
     length = answer.readlines()[0].strip()
-    if int(length) < 200:
+    if int(length) < MIN_LENGTH:
         print "Skipping video, length too low"
         return
-    
-    os.system("rm %s/%s.mp4"%(dir_path,video_name))
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
@@ -152,13 +152,11 @@ def main(n=None):
         video_m3u8='http://128.199.128.227/chestream_raw/%s/playlist.m3u8'%video_name
         video_gif ='http://128.199.128.227/chestream_raw/%s/video_teaser.gif'%video_name
         ffmpeg(video.url)
-        ret = urllib2.urlopen(video_m3u8)
-	if ret.code != 200:
-    	    print "m3u8 file not created: Aborting"
-            continue
-        ret = urllib2.urlopen(video_gif)
-        if ret.code != 200:
-            print "gif file not created: Aborting"
+	try:
+            ret = urllib2.urlopen(video_m3u8)
+	    ret2 = urllib2.urlopen(video_gif)
+	except:
+	    print "meta files not created: Skipping"
 	    continue
 	update_parse(video.objectId,video_m3u8,video_gif)
 
@@ -190,7 +188,7 @@ def scrape_instagram(n=None):
 	os.system("rm %s/%s"%(dir_path,video_name))	
 	print length
 
-        if int(length) < 15:
+        if int(length) < MIN_LENGTH:
             print "Skipping video, length too low"
             continue 
 
