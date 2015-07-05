@@ -111,7 +111,7 @@ def ffmpeg(video_url):
     os.system("wget %s -P %s"%(video_url,dir_path))
 
     print "Checking length of video file"
-    answer = os.popen("./get_duration.sh %s/%s.mp4"%(dir_path,video_name))
+    answer = os.popen("%s/get_duration.sh %s/%s.mp4"%(dir_path,dir_path,video_name))
     length = answer.readlines()[0].strip()
     if int(length) < MIN_LENGTH:
         print "Skipping video, length too low"
@@ -165,8 +165,13 @@ def get_location(lat,long):
 
 def scrape_instagram(n=None):
     temp_gif = 'http://31.media.tumblr.com/a7d1b4cccb6f89dd745e88148e82b842/tumblr_mr4mswW7961sd35juo1_500.gif'
-    url = "https://api.instagram.com/v1/media/popular?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
-    #url = "https://api.instagram.com/v1/tags/hyperlapse/media/recent?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
+    
+    #Randomly decide which API url to use
+    if int(time.time())%2:
+        url = "https://api.instagram.com/v1/media/popular?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
+    else:
+        url = "https://api.instagram.com/v1/tags/hyperlapse/media/recent?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
+   
     j = requests.get(url).json()
     videos = [i for i in j['data'] if i['type'] == 'video']
     
