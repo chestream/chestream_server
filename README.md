@@ -38,6 +38,8 @@
 http://i.imgur.com/Zr1rPt7.gif
 http://www.ioncannon.net/programming/452/iphone-http-streaming-with-ffmpeg-and-an-open-source-segmenter/
 
+##playing with ffmpeg
+    ffmpeg -v 9 -loglevel warning -re -i video.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -f segment -segment_time 4 -segment_list_entry_prefix http://128.199.128.227/chestream_raw/11684434_922926634440022_1379396238_n/ -segment_list playlist1.m3u8 -segment_format mpegts part%05d.ts
 
 ###Server stuff
 
