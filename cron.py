@@ -97,7 +97,6 @@ def update_clusterpoint(video_name,video_compiled,video_m3u8,video_teaser):
 def update_parse(objectId,video_m3u8,video_gif,video_thumbnail):
     #v = Videos.Query.filter(objectId=objectId)
     try:
-        print video.user.username
         user_name = video.user.username
         user_avatar = video.user.avatar
     except:
@@ -130,12 +129,12 @@ def ffmpeg(video_url):
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
-        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -an -c:v libx264 -b:v 512k -flags -global_header -map 0 -f segment -segment_time 4 \
+        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -map 0 -f segment -segment_time 4 \
         -segment_list_entry_prefix http://128.199.128.227/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
         -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,dir_path,video_name,video_name,dir_path,video_name)
     else:
 	#it's an instagram video
-        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -an -c:v libx264 -b:v 512k -flags -global_header -f segment -segment_time 4 \
+        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -f segment -segment_time 4 \
         -segment_list_entry_prefix http://128.199.128.227/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
         -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,video_name,dir_path,video_name,dir_path,video_name)
     
@@ -245,6 +244,7 @@ def scrape_instagram(n=None):
 
         v = Videos(user=u,title=title,url=video_url,user_location=user_location,compiled=False,played=False,upvotes=likes/100,video_gif=temp_gif)
         v.save()
+        print video_url
         if n:
 	    continue
 
