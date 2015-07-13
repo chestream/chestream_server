@@ -10,8 +10,10 @@ from parse_rest.datatypes import Object, GeoPoint
 from parse_rest.user import User
 import sys
 import urllib2
+import time
 
 MIN_LENGTH=10
+EPOCH = int(time.time())
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -92,9 +94,18 @@ def update_clusterpoint(video_name,video_compiled,video_m3u8,video_teaser):
 
     con.update({video_name:doc})
 
-def update_parse(objectId,video_m3u8,video_gif):
+def update_parse(objectId,video_m3u8,video_gif,video_thumbnail):
     #v = Videos.Query.filter(objectId=objectId)
-    v = Videos(objectId=objectId,video_m3u8=video_m3u8,video_gif=video_gif,compiled=True)
+    try:
+        print video.user.username
+        user_name = video.user.username
+        user_avatar = video.user.avatar
+    except:
+        user_name = 'test'
+        user_avatar = 'https://i.imgur.com/4VjEHoK.jpg'
+
+    v = Videos(objectId=objectId,video_m3u8=video_m3u8,video_gif=video_gif,video_thumbnail=video_thumbnail,\
+	user_name=user_name,user_avatar=user_avatar,compiled=True)
     v.save()
     
 
@@ -129,15 +140,20 @@ def ffmpeg(video_url):
         -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,video_name,dir_path,video_name,dir_path,video_name)
     
     os.system(cmd)
-    os.system("cp %s/%s.mp4 %s/chestream_raw/%s/"%(dir_path,video_name,dir_path,video_name))
     
     print "Generating Gif"
     gif_cmd = "ffmpeg -y -ss 3 -t 3 -i %s/%s.mp4 -vf fps=10,scale=320:-1:flags=lanczos,palettegen %s/palette.png"%(dir_path,video_name,dir_path)
     gif_cmd2 = 'ffmpeg -ss 3 -t 3 -i %s/%s.mp4 -i %s/palette.png -filter_complex \
             "fps=10,scale=320:-1:flags=lanczos[x];[x][1:v]paletteuse" %s/chestream_raw/%s/video_teaser.gif'%(dir_path,video_name,dir_path,dir_path,video_name)
     
+    print "Generating vide thumbnail"
+    frame_cmd ="ffmpeg -i %s/%s.mp4 -vf 'select=gte(n\,10)' -vframes 1 %s/chestream_raw/%s/thumbnail.png"%(dir_path,video_name,dir_path,video_name)
+
     os.system(gif_cmd)
     os.system(gif_cmd2)
+    os.system(frame_cmd)
+
+    os.system("cp %s/%s.mp4 %s/chestream_raw/%s/"%(dir_path,video_name,dir_path,video_name))
     os.system("rm %s/%s.mp4"%(dir_path,video_name))
 
 
@@ -151,6 +167,7 @@ def main(n=None):
         video_compiled='true'
         video_m3u8='http://128.199.128.227/chestream_raw/%s/playlist.m3u8'%video_name
         video_gif ='http://128.199.128.227/chestream_raw/%s/video_teaser.gif'%video_name
+        video_thumbnail ='http://128.199.128.227/chestream_raw/%s/thumbnail.png'%video_name
         ffmpeg(video.url)
 	try:
             ret = urllib2.urlopen(video_m3u8)
@@ -158,16 +175,16 @@ def main(n=None):
 	except:
 	    print "meta files not created: Skipping"
 	    continue
-	update_parse(video.objectId,video_m3u8,video_gif)
+	update_parse(video.objectId,video_m3u8,video_gif,video_thumbnail)
 
 def get_location(lat,long):
     return "New Delhi"
 
 def scrape_instagram(n=None):
     temp_gif = 'http://31.media.tumblr.com/a7d1b4cccb6f89dd745e88148e82b842/tumblr_mr4mswW7961sd35juo1_500.gif'
-    
+        
     #Randomly decide which API url to use
-    if int(time.time())%2:
+    if EPOCH%2:
         url = "https://api.instagram.com/v1/media/popular?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
     else:
         url = "https://api.instagram.com/v1/tags/hyperlapse/media/recent?access_token=362670545.1677ed0.87ca9b1581b44617b6154a213c0d8c2d"
@@ -235,10 +252,18 @@ def scrape_instagram(n=None):
 def refresh_parse():
     all_videos = Videos.Query.all()
     for video in all_videos:
-        video.played = False
+	try:
+	    print video.user.username
+            video_name = video.video_gif.split("/")[-2]
+            video.video_thumbnail = 'http://128.199.128.227/chestream_raw/%s/thumbnail.png'%video_name
+	    video.user_name = video.user.username
+	    video.user_avatar = video.user.avatar
+        except:
+	    video.user_name = 'test'
+	    video.user_avatar = 'https://i.imgur.com/4VjEHoK.jpg'
+	video.played = False
         video.save()
         
-
 
 
 if __name__ == '__main__':
