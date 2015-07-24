@@ -11,9 +11,13 @@ from parse_rest.user import User
 import sys
 import urllib2
 import time
+from bs4 import BeautifulSoup
+from random import randint
+import hashlib
 
 MIN_LENGTH=10
 EPOCH = int(time.time())
+SERVER_URL = 'http://104.131.207.33'
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,10 +32,22 @@ register(parse_credentials["application_id"], parse_credentials["rest_api_key"])
 class Videos(Object):
     pass
 
+class ManualVideos(Object):
+    pass
+
 con = pycps.Connection('tcp://cloud-eu-0.clusterpoint.com:9007', 'chestream', 'stomatrix@gmail.com', 'sauravclusterpoint', '1104')
 blob_service = BlobService(account_name='fo0', account_key='4QX9QsqElWP0Z9KsUWmzpM5tsM1L565VzzZvZxh9qefM6hbOj/ex1Z+0NwZUURnweimZZgzVGe6vAeytDqkVLg==')
 base_url="https://fo0.blob.core.windows.net/videos/"
 
+fake_users = [
+    ["Faisal","http://i.imgur.com/RofSvsa.png"],
+    ["Crime Master Gogo","http://i.imgur.com/JV60lE2.png"],
+    ["Gabbar Singh","http://i.imgur.com/SPJHTUb.png"],
+    ["Marla Singer","http://i.imgur.com/NiRv6gG.png"],
+    ["Darth Vader","http://i.imgur.com/vAJFuzL.png"],
+    ["Tony Montana","http://i.imgur.com/aS1tmbB.png"],
+    ["Jack Sparrow","http://i.imgur.com/Ahx14o6.png"]
+]
 
 #given a tuple of values, it return them in a dictionary form
 def get_dict(**kwargs):
@@ -125,18 +141,18 @@ def ffmpeg(video_url):
     length = answer.readlines()[0].strip()
     if int(length) < MIN_LENGTH:
         print "Skipping video, length too low"
-        return
+        return ""
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
         cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -map 0 -f segment -segment_time 4 \
-        -segment_list_entry_prefix http://128.199.128.227/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
-        -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,dir_path,video_name,video_name,dir_path,video_name)
+        -segment_list_entry_prefix %s/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
+        -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,SERVER_URL,dir_path,video_name,video_name,dir_path,video_name)
     else:
 	#it's an instagram video
         cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -f segment -segment_time 4 \
-        -segment_list_entry_prefix http://128.199.128.227/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
-        -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,video_name,dir_path,video_name,dir_path,video_name)
+        -segment_list_entry_prefix %s/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
+        -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,SERVER_URL,video_name,dir_path,video_name,dir_path,video_name)
     
     os.system(cmd)
     
@@ -154,7 +170,7 @@ def ffmpeg(video_url):
 
     os.system("cp %s/%s.mp4 %s/chestream_raw/%s/"%(dir_path,video_name,dir_path,video_name))
     os.system("rm %s/%s.mp4"%(dir_path,video_name))
-
+    return "done"
 
 def main(n=None):
     all_videos = Videos.Query.all()
@@ -164,9 +180,9 @@ def main(n=None):
         video_name = video.url.split('/')[-1]
         video_name = video_name.split('.')[0]
         video_compiled='true'
-        video_m3u8='http://128.199.128.227/chestream_raw/%s/playlist.m3u8'%video_name
-        video_gif ='http://128.199.128.227/chestream_raw/%s/video_teaser.gif'%video_name
-        video_thumbnail ='http://128.199.128.227/chestream_raw/%s/thumbnail.png'%video_name
+        video_m3u8='%s/chestream_raw/%s/playlist.m3u8'%(SERVER_URL,video_name)
+        video_gif ='%s/chestream_raw/%s/video_teaser.gif'%(SERVER_URL,video_name)
+        video_thumbnail ='%s/chestream_raw/%s/thumbnail.png'%(SERVER_URL,video_name)
         ffmpeg(video.url)
 	try:
             ret = urllib2.urlopen(video_m3u8)
@@ -252,19 +268,126 @@ def scrape_instagram(n=None):
 def refresh_parse():
     all_videos = Videos.Query.all()
     for video in all_videos:
-	try:
-	    print video.user.username
-            video_name = video.video_gif.split("/")[-2]
-            video.video_thumbnail = 'http://128.199.128.227/chestream_raw/%s/thumbnail.png'%video_name
-	    video.user_name = video.user.username
-	    video.user_avatar = video.user.avatar
-        except:
-	    video.user_name = 'test'
-	    video.user_avatar = 'https://i.imgur.com/4VjEHoK.jpg'
 	video.played = False
         video.save()
         
+def scrapeBB():
+    graph_url= "https://graph.facebook.com/v2.4/BBkiVines?fields=videos&access_token=CAACEdEose0cBAA2EfmLsjyFeY7d6ZBD6XZCQ4jYJ7ZCF0fyQfdcSGLhkNg5DZBbtUxCm10Di147q7QZATRDLHBvoKhiDTIrHrfBlEfrypaUZAJSHzM6Kyz4U3exB637StZAvbY10xbAh1U5fZAYq3x2x8dyhqtO5E9DVdJWMRBk5B40JLVhMLKkJ2KpBlgNidD8dkzvvn06euS1A9meQgQhemXgKyEHlrPIZD"
+    graph_url = "https://graph.facebook.com/v2.4/BBkiVines?fields=videos&access_token=CAACEdEose0cBAJRiSyhLDUDN9m1kYhjWvR7ftlX1NcJQY2Ga0AkRQuc4y1ZCMctFmcFZC4XlTDa1jBJdYbuqoXsXJeXGfDCQJPosBaGFZC6RPCbWf87DQumJRZAo5LBBf4VU7GWNDhJQmcF5uULZCsZBHkx8FrSFp9ze1Hvzb5Aj7MvZC80USMbFyx5DZBQs1eTThUoDM3FAvPJ7U83wCQWiGveY2iCXm2IZD"
+    video_arr=requests.get(graph_url).json()['videos']['data']
+    title_arr = []
+    all_videos = Videos.Query.all()
+    for video in all_videos:
+        title_arr.append(video.title)
+    
+    for i in video_arr:
+        video_id = i['id']
+        video_url = "https://www.facebook.com/BBkiVines/videos/%s/?permPage=1"%video_id
+        soup = BeautifulSoup(requests.get(video_url).text)
+        title = soup.title.string.split('|')[0]
+        print title
+        if title in title_arr:
+            print "Skipping repeating video: %s"%title
+            continue
+        os.system("mkdir %s/chestream_raw/%s"%(dir_path,video_id))
+        os.system("youtube-dl %s -o '%s/chestream_raw/%%(id)s/%%(id)s.mp4'"%(video_url,dir_path))
+        resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id))
+        if resp!='done':
+	    continue
 
+        user_avatar = """https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xta1/v/t1.0-1/c22.0.160.160/p160x160/11218871_552466524895968_6251377989366115459_n.jpg?oh=36872015c678da38fc28abeb2f6e45e9&oe=5613946D&__gda__=1444496193_44f1b942badf7739e3714a3b4497b63f"""
+
+	try:
+            u = User.signup(username='Bhuvan Bam',avatar=user_avatar, password='12345')
+        except:
+            u = User.login('Bhuvan Bam',"12345")
+	
+	video_url = "%s/chestream_raw/%s/playlist.m3u8"%(SERVER_URL,video_id)
+        video_gif = "%s/chestream_raw/%s/video_teaser.gif"%(SERVER_URL,video_id)
+        video_thumbnail = "%s/chestream_raw/%s/thumbnail.png"%(SERVER_URL,video_id)
+
+        v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+		video_gif=video_gif,video_thumbnail=video_thumbnail,\
+		video_m3u8=video_url,user_name="Bhuvan Bam",user_avatar=user_avatar,\
+		played=False,upvotes=randint(11,80))
+        v.save()
+        
+
+def scrapelaf():
+    title_arr = []
+    all_videos = Videos.Query.all()
+    for video in all_videos:
+        title_arr.append(video.title)
+
+    video_ids='kd4xDp8rkGk,DJrOH3A1WNQ,JjsBIhgI8Y'
+    for video_id in video_ids.split(','):
+        video_url = 'https://www.youtube.com/watch?v='+video_id
+	soup = BeautifulSoup(requests.get(video_url).text)
+        title = soup.title.string.split('|')[0]
+        print title
+        if title in title_arr:
+            print "Skipping repeating video: %s"%title
+            continue
+        os.system("mkdir %s/chestream_raw/%s"%(dir_path,video_id))
+        os.system("youtube-dl %s -o '%s/chestream_raw/%%(id)s/%%(id)s.mp4'"%(video_url,dir_path))
+        resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id))
+        if resp!='done':
+            continue
+	user_avatar="https://medium2.global.ssl.fastly.net/max/800/1*EBwpIpWBSkeIJMBrwCfoFA.jpeg"	
+	try:
+            u = User.signup(username='Little Anarky Films',avatar=user_avatar, password='12345')
+        except:
+            u = User.login('Little Anarky Films',"12345")
+	
+	video_url = "%s/chestream_raw/%s/playlist.m3u8"%(SERVER_URL,video_id)
+        video_gif = "%s/chestream_raw/%s/video_teaser.gif"%(SERVER_URL,video_id)
+        video_thumbnail = "%s/chestream_raw/%s/thumbnail.png"%(SERVER_URL,video_id)
+
+        v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+                video_gif=video_gif,video_thumbnail=video_thumbnail,\
+                video_m3u8=video_url,user_name="Little Anarky Films",user_avatar=user_avatar,\
+                played=False,upvotes=randint(11,80))
+        v.save()
+
+def scrapeParseYT():
+    queue_videos = Videos.Query.all()
+    manual_videos = ManualVideos.Query.all()
+    new_videos=[]
+    title_arr = [video.title for video in queue_videos]
+
+    for video in manual_videos:
+        if video.Title not in title_arr:
+            new_videos.append(video)
+	    print video.Title
+
+    for video in new_videos:
+        video_url = video.video_url
+        video_id = hashlib.sha1(video_url).hexdigest()[:10]
+        
+        os.system("mkdir %s/chestream_raw/%s"%(dir_path,video_id))
+        os.system("youtube-dl %s -o '%s/chestream_raw/%%(id)s/%%(id)s.mp4'"%(video_url,dir_path))
+        resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id))
+        if resp!='done':
+            continue
+        random_user = fake_users[randint(0,len(fake_users)-1)]
+        user_name = random_user[0]
+	user_avatar=random_user[1]
+        try:
+            u = User.signup(username=user_name,avatar=user_avatar, password='12345')
+        except:
+            u = User.login(user_name,"12345")
+
+        video_url = "%s/chestream_raw/%s/playlist.m3u8"%(SERVER_URL,video_id)
+        video_gif = "%s/chestream_raw/%s/video_teaser.gif"%(SERVER_URL,video_id)
+        video_thumbnail = "%s/chestream_raw/%s/thumbnail.png"%(SERVER_URL,video_id)
+
+        v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+                video_gif=video_gif,video_thumbnail=video_thumbnail,\
+                video_m3u8=video_url,user_name="Little Anarky Films",user_avatar=user_avatar,\
+                played=False,upvotes=randint(11,80))
+        v.save()
+	break
+    
 
 if __name__ == '__main__':
     if 'refresh' == sys.argv[1]:
@@ -282,4 +405,10 @@ if __name__ == '__main__':
     elif 'testagram' == sys.argv[1]:
         scrape_instagram(n=1)
         main(n=1)
+
+    elif 'test' == sys.argv[1]:
+        scrapeParseYT()
+
+    elif 'scrapeParse' == sys.argv[1]:
+	scrapeParseYT()
 
