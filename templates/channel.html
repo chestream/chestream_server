@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+
+{% block title %}{{channel.name}}{% endblock %}
+
+{% block css %}
+  <style type="text/css">
+    .channels{
+      margin-left: 100px;
+    }
+    .channels>a{
+      display: inline-block;
+      font-weight: bold;
+      color:black;
+      text-align: center;
+    }
+    .channel_circle{
+      width:100px;
+      height:100px;
+      border-radius:50px;
+      border:5px solid white;
+      margin:0px 20px 0px 20px;
+    }
+    .inline{
+      display:inline-block;
+    }
+
+    #player{
+      position: fixed;
+      top:100px;
+      right:50px;
+      width:400px;
+      height:400px;
+    }
+
+    #upload_button{
+      position: fixed;
+      bottom:50px;
+      left:45%;
+      border:5px solid black;
+    }
+    
+  </style>
+{% endblock %}
+
+{% block content %}
+  
+  <div class="row">
+    <div class="col-md-8 channels">
+        
+        <p>Channel Info</p>
+        <div>
+          {{channel.name}}
+          {{channel.info}}
+        </div>
+
+        <p>All Videos</p>
+        {% for video in channel_videos %}
+          <div class="video_item">
+            <button id='{{video.url}}' class='inline'>Play</button>
+            <p class="inline">{{video.title}}</p>
+            <!-- <button class="small inline">Delete</button> -->
+          </div>
+          
+        {% endfor %}
+
+        <!-- <p>Deleted Videos</p> -->
+
+    </div>
+
+    <div class="col-md-4">
+      <video id="player" src="video.webm" controls></video>
+    </div>
+  </div>
+
+  <button id="upload_button" type="button" class="btn btn-primary btn-lg">Upload</button>
+    
+        
+
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+      $('button').click(function(){
+          console.log(this.id);
+          $('#player').attr('src', this.id);
+          $('#player').play();
+      });
+    </script>
+{% endblock %}
+
+

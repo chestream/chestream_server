@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import flask, flask.views
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 app = Flask(__name__)
 from parse_rest.connection import register
@@ -19,6 +20,9 @@ parse_credentials = {
 register(parse_credentials["application_id"], parse_credentials["rest_api_key"])
 
 class Videos(Object):
+    pass
+
+class Channels(Object):
     pass
 
 #given a tuple of values, it return them in a dictionary form
@@ -56,6 +60,27 @@ def main():
     )
 
     return jsonify(data=video_data)
+
+@app.route('/dash')
+def dashboard():
+    all_channels = Channels.Query.all()
+    return flask.render_template('index.html',all_channels=all_channels)
+
+@app.route('/channel/<channel_id>')
+def channel(channel_id):
+    all_videos = Videos.Query.all()
+    channel_videos=[]
+    for video in all_videos:
+        if video.channel == channel_id:
+            #generating raw video urls from m3u8 files
+            video_id = video.url.split('/')[-2]
+            video.url = video.url[:-13]+video_id+'.mp4'
+            channel_videos.append(video)
+
+    channel = Channels.Query.filter(objectId=channel_id)
+
+    return flask.render_template('channel.html',channel_videos=channel_videos,channel=channel)
+
 
 
 if __name__ == '__main__':

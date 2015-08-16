@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+
+{% block title %}All Channels{% endblock %}
+
+{% block css %}
+  <style type="text/css">
+    .channels{
+      margin-left: 100px;
+    }
+    .channels>a{
+      display: inline-block;
+      font-weight: bold;
+      color:black;
+      text-align: center;
+    }
+    .channel_circle{
+      width:150px;
+      height:150px;
+      border-radius:75px;
+      border:5px solid white;
+      margin:0px 20px 0px 20px;
+    }
+    
+  </style>
+{% endblock %}
+
+{% block content %}
+  
+  <div class="row">
+    <div class="col-md-8 channels">
+        <p>All Channels</p>
+        {% for i in all_channels %}
+          <a href="/channel/{{i.objectId}}">
+            <div class="channel_circle" style="background: url('{{i.picture}}') no-repeat center;"></div>
+            <p>{{i.name}}</p>
+          </a>
+        {% endfor %}
+    </div>
+  </div>
+    
+        
+
+{% endblock %}
+
+{% block script %}
+    
+{% endblock %}
+
+
