@@ -33,6 +33,20 @@ def get_dict(**kwargs):
     return d
 
 
+@app.route('/channels')
+def channels():
+    d= [
+        {"name" : "Bhuvan Bam",
+        "picture" : "https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xta1/v/t1.0-1/c22.0.160.160/p160x160/11218871_552466524895968_6251377989366115459_n.jpg?oh=36872015c678da38fc28abeb2f6e45e9&oe=5613946D&__gda__=1444496193_44f1b942badf7739e3714a3b4497b63f",
+        "video_ids": ["fgqhMsk8vd","5XG2fo3FiY","SoR7E35cdK","ZsyiYMa9Ej"],
+        "active_users": "90"},
+        {"name" : "test",
+        "picture" : "https://cdn3.iconfinder.com/data/icons/avatars-9/145/Avatar_Rabbit-128.png",
+        "video_ids": ["fgqhMsk8vd","5XG2fo3FiY","SoR7E35cdK","ZsyiYMa9Ej"],
+        "active_users": "10"}
+    ]	
+
+    return jsonify(data=d)
 
 @app.route('/')
 def main():
