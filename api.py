@@ -10,6 +10,8 @@ from parse_rest.user import User
 from flask import jsonify
 import operator
 import time
+import json
+from random import randint
 
 parse_credentials = {
     "application_id": "M5tnZk2K6PdF82Ra8485bG2VQwPjpeZLeL96VLPj",
@@ -32,21 +34,34 @@ def get_dict(**kwargs):
         d[k] = v
     return d
 
+def get_channel_videos(channel_id):
+    all_videos = Videos.Query.all()
+    channel_videos=[]
+    channel_ids=[]
+    for video in all_videos:
+        if video.channel == channel_id:
+            #generating raw video urls from m3u8 files
+            video_id = video.url.split('/')[-2]
+            video.url = video.url[:-13]+video_id+'.mp4'
+            channel_ids.append(video.objectId)
+            channel_videos.append(video)
+
+    return channel_videos,channel_ids
 
 @app.route('/channels')
 def channels():
-    d= [
-        {"name" : "Bhuvan Bam",
-        "picture" : "https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xta1/v/t1.0-1/c22.0.160.160/p160x160/11218871_552466524895968_6251377989366115459_n.jpg?oh=36872015c678da38fc28abeb2f6e45e9&oe=5613946D&__gda__=1444496193_44f1b942badf7739e3714a3b4497b63f",
-        "video_ids": ["fgqhMsk8vd","5XG2fo3FiY","SoR7E35cdK","ZsyiYMa9Ej"],
-        "active_users": "90"},
-        {"name" : "test",
-        "picture" : "https://cdn3.iconfinder.com/data/icons/avatars-9/145/Avatar_Rabbit-128.png",
-        "video_ids": ["fgqhMsk8vd","5XG2fo3FiY","SoR7E35cdK","ZsyiYMa9Ej"],
-        "active_users": "10"}
-    ]	
+    all_channels = Channels.Query.all()
+    a=[]
+    for i in all_channels:
+        d={}
+        d['name']=i.name
+        d['info']=i.info
+        d['active_users']=randint(0,90)
+        d['picture']=i.picture
+        f,d['video_ids']= get_channel_videos(i.objectId)
+        a.append(d)
 
-    return jsonify(data=d)
+    return jsonify(data=a)
 
 @app.route('/')
 def main():
@@ -82,14 +97,7 @@ def dashboard():
 
 @app.route('/channel/<channel_id>')
 def channel(channel_id):
-    all_videos = Videos.Query.all()
-    channel_videos=[]
-    for video in all_videos:
-        if video.channel == channel_id:
-            #generating raw video urls from m3u8 files
-            video_id = video.url.split('/')[-2]
-            video.url = video.url[:-13]+video_id+'.mp4'
-            channel_videos.append(video)
+    channel_videos,channel_ids= get_channel_videos(channel_id)
 
     channel = Channels.Query.filter(objectId=channel_id)
 
