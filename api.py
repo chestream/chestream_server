@@ -56,6 +56,7 @@ def channels():
         d={}
         d['name']=i.name
         d['info']=i.info
+        d['channel_id']=i.objectId
         d['active_users']=randint(0,90)
         d['picture']=i.picture
         f,d['video_ids']= get_channel_videos(i.objectId)
