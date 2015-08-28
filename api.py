@@ -60,7 +60,8 @@ def channels():
         d['active_users']=randint(0,90)
         d['picture']=i.picture
         f,d['video_ids']= get_channel_videos(i.objectId)
-        a.append(d)
+        if i.active:
+            a.append(d)
 
     return jsonify(data=a)
 

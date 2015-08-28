@@ -14,6 +14,8 @@ import time
 from bs4 import BeautifulSoup
 from random import randint
 import hashlib
+import time
+
 
 MIN_LENGTH=10
 EPOCH = int(time.time())
@@ -125,7 +127,7 @@ def update_parse(objectId,video_m3u8,video_gif,video_thumbnail):
     
 
 
-def ffmpeg(video_url):
+def ffmpeg(video_url,override_length_check=False):
     video_name = video_url.split('/')[-1]
     video_name=video_name.split('.')[0]
     print video_name
@@ -135,13 +137,14 @@ def ffmpeg(video_url):
     
     print "downloading video file"
     os.system("wget %s -P %s"%(video_url,dir_path))
-
-    print "Checking length of video file"
-    answer = os.popen("%s/get_duration.sh %s/%s.mp4"%(dir_path,dir_path,video_name))
-    length = answer.readlines()[0].strip()
-    if int(length) < MIN_LENGTH:
-        print "Skipping video, length too low"
-        return ""
+    
+    if not override_length_check:
+        print "Checking length of video file"
+        answer = os.popen("%s/get_duration.sh %s/%s.mp4"%(dir_path,dir_path,video_name))
+        length = answer.readlines()[0].strip()
+        if int(length) < MIN_LENGTH:
+            print "Skipping video, length too low"
+            return ""
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
@@ -171,6 +174,25 @@ def ffmpeg(video_url):
     os.system("cp %s/%s.mp4 %s/chestream_raw/%s/"%(dir_path,video_name,dir_path,video_name))
     os.system("rm %s/%s.mp4"%(dir_path,video_name))
     return "done"
+
+def manual_scrape(video_url,title):
+    video_name = video_url.split('/')[-1]
+    video_name = video_name.split('.')[0]
+    video_compiled='true'
+    video_m3u8='%s/chestream_raw/%s/playlist.m3u8'%(SERVER_URL,video_name)
+    video_gif ='%s/chestream_raw/%s/video_teaser.gif'%(SERVER_URL,video_name)
+    video_thumbnail ='%s/chestream_raw/%s/thumbnail.png'%(SERVER_URL,video_name)
+    ffmpeg(video_url)
+    try:
+        u = User.signup(username='Chestream',avatar="http://i.imgur.com/nBpMmBF.png", password='12345')
+    except:
+        u = User.login('Chestream',"12345")
+    v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+                video_gif=video_gif,video_thumbnail=video_thumbnail,\
+                video_m3u8=video_url,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
+                played=False,upvotes=randint(11,80))
+    v.save()
+    #update_parse(video.objectId,video_m3u8,video_gif,video_thumbnail)
 
 def main(n=None):
     all_videos = Videos.Query.all()
@@ -268,6 +290,7 @@ def scrape_instagram(n=None):
 def refresh_parse():
     all_videos = Videos.Query.all()
     for video in all_videos:
+	video.upvotes=randint(10,100)
 	video.played = False
         video.save()
         
@@ -313,17 +336,23 @@ def scrapeBB():
         v.save()
         
 
-def scrapelaf():
+def scrapeYoutubeChannel():
+    user_avatar = 'http://i.imgur.com/KOAUTVa.png'    
+    partner_name='SocioCatastrophoreTV'
+    partner_username='SociaCatastrophoreTV'
+    video_ids='znNwqDJACYo,scfbDJLEIGg,Vhat0nkIahw'
+
     title_arr = []
     all_videos = Videos.Query.all()
     for video in all_videos:
         title_arr.append(video.title)
 
-    video_ids='kd4xDp8rkGk,DJrOH3A1WNQ,JjsBIhgI8Y'
+
     for video_id in video_ids.split(','):
         video_url = 'https://www.youtube.com/watch?v='+video_id
 	soup = BeautifulSoup(requests.get(video_url).text)
         title = soup.title.string.split('|')[0]
+        title=title.split("-")[0]
         print title
         if title in title_arr:
             print "Skipping repeating video: %s"%title
@@ -333,11 +362,11 @@ def scrapelaf():
         resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id))
         if resp!='done':
             continue
-	user_avatar="https://medium2.global.ssl.fastly.net/max/800/1*EBwpIpWBSkeIJMBrwCfoFA.jpeg"	
+		
 	try:
-            u = User.signup(username='Little Anarky Films',avatar=user_avatar, password='12345')
+            u = User.signup(name=partner_name,username=partner_username,avatar=user_avatar, password='12345')
         except:
-            u = User.login('Little Anarky Films',"12345")
+            u = User.login(partner_username,"12345")
 	
 	video_url = "%s/chestream_raw/%s/playlist.m3u8"%(SERVER_URL,video_id)
         video_gif = "%s/chestream_raw/%s/video_teaser.gif"%(SERVER_URL,video_id)
@@ -345,7 +374,7 @@ def scrapelaf():
 
         v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
                 video_gif=video_gif,video_thumbnail=video_thumbnail,\
-                video_m3u8=video_url,user_name="Little Anarky Films",user_avatar=user_avatar,\
+                video_m3u8=video_url,user_name=partner_username,user_avatar=user_avatar,\
                 played=False,upvotes=randint(11,80))
         v.save()
 
@@ -361,19 +390,22 @@ def scrapeParseYT():
 	    print video.Title
 
     for video in new_videos:
-        video_url = video.video_url
+        print "Now downloading: "+ video.Title
+	video_url = video.video_url
         video_id = hashlib.sha1(video_url).hexdigest()[:10]
         
         os.system("mkdir %s/chestream_raw/%s"%(dir_path,video_id))
-        os.system("youtube-dl %s -o '%s/chestream_raw/%%(id)s/%%(id)s.mp4'"%(video_url,dir_path))
-        resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id))
+        os.system("youtube-dl %s -o '%s/chestream_raw/%s/%s.mp4'"%(video_url,dir_path,video_id,video_id))
+	print "%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id)
+        resp = ffmpeg("%s/chestream_raw/%s/%s.mp4"%(SERVER_URL,video_id,video_id),override_length_check=True)
         if resp!='done':
             continue
         random_user = fake_users[randint(0,len(fake_users)-1)]
-        user_name = random_user[0]
+        name = random_user[0]
+	user_name = name.replace(" ","")
 	user_avatar=random_user[1]
         try:
-            u = User.signup(username=user_name,avatar=user_avatar, password='12345')
+            u = User.signup(username=user_name,name=name,avatar=user_avatar, password='12345')
         except:
             u = User.login(user_name,"12345")
 
@@ -381,12 +413,11 @@ def scrapeParseYT():
         video_gif = "%s/chestream_raw/%s/video_teaser.gif"%(SERVER_URL,video_id)
         video_thumbnail = "%s/chestream_raw/%s/thumbnail.png"%(SERVER_URL,video_id)
 
-        v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+        v = Videos(user=u,title=video.Title,url=video_url,user_location="New Delhi",compiled=True,\
                 video_gif=video_gif,video_thumbnail=video_thumbnail,\
-                video_m3u8=video_url,user_name="Little Anarky Films",user_avatar=user_avatar,\
-                played=False,upvotes=randint(11,80))
+                video_m3u8=video_url,user_name=user_name,user_avatar=user_avatar,\
+                played=False,upvotes=randint(11,40))
         v.save()
-	break
     
 
 if __name__ == '__main__':
@@ -407,8 +438,9 @@ if __name__ == '__main__':
         main(n=1)
 
     elif 'test' == sys.argv[1]:
-        scrapeParseYT()
+        manual_scrape("http://104.131.207.33/chestream_raw/gujj3.mp4","Gujarat Riots")
 
     elif 'scrapeParse' == sys.argv[1]:
 	scrapeParseYT()
+
 
