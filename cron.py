@@ -94,12 +94,12 @@ def ffmpeg(video_url,override_length_check=False):
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
-        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -map 0 -f segment -segment_time 4 \
+        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 192k -flags -global_header -map 0 -f segment -segment_time 4 \
         -segment_list_entry_prefix %s/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
         -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,SERVER_URL,dir_path,video_name,video_name,dir_path,video_name)
     else:
 	#it's an instagram video
-        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 512k -flags -global_header -f segment -segment_time 4 \
+        cmd = "ffmpeg -v 9 -loglevel quiet -re -i %s/%s.mp4 -c:v libx264 -c:a copy -b:v 192k -flags -global_header -f segment -segment_time 4 \
         -segment_list_entry_prefix %s/chestream_raw/%s/ -segment_list %s/chestream_raw/%s/playlist.m3u8 \
         -segment_format mpegts %s/chestream_raw/%s/part%%05d.ts"%(dir_path,video_name,SERVER_URL,video_name,dir_path,video_name,dir_path,video_name)
     

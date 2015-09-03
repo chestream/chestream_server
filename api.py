@@ -13,7 +13,7 @@ import time
 import json
 from random import randint
 import os
-from cron import manual_scrape,SERVER_URL
+from cron import manual_scrape,SERVER_URL,dir_path
 
 parse_credentials = {
     "application_id": "M5tnZk2K6PdF82Ra8485bG2VQwPjpeZLeL96VLPj",
@@ -117,10 +117,10 @@ def upload():
             filename = genFilename(file.filename)
             print filename
             file.save(os.path.join('chestream_raw/', filename))
-
+        os.system("ffmpeg -i chestream_raw/%s -c:v libx264 -c:a copy -b:v 192k -s 640x480 chestream_raw/%s"%(filename,"192_"+filename))
         flash('File was successfully uploaded')
-        manual_scrape("%s/chestream_raw/%s"%(SERVER_URL,filename),'Test title',channel_id=channel_id)
-        return flask.redirect("%s/chestream_raw/%s"%(SERVER_URL,filename.split('.')[0]))
+        manual_scrape("%s/chestream_raw/192_%s"%(SERVER_URL,filename),'Test title',channel_id=channel_id)
+        return flask.redirect("%s/chestream_raw/192_%s"%(SERVER_URL,filename.split('.')[0]))
 
 
 @app.route('/channel/<channel_id>')
@@ -136,5 +136,6 @@ def channel(channel_id):
 if __name__ == '__main__':
     app.secret_key = 'super secret key'
     app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['PROPAGATE_EXCEPTIONS'] = True
     app.run(debug=True,host='0.0.0.0')
 

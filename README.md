@@ -1,5 +1,7 @@
 # chestream_server
 
+best video compression ffmpeg -i input.mp4 -c:v libx264 -c:a copy -b:v 192k output192.mp4
+
 + Converting mp4 to .ts
   + ffmpeg -i input.mp4 -c copy -bsf h264_mp4toannexb output.ts
 
