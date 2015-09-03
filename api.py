@@ -127,7 +127,7 @@ def upload():
 def channel(channel_id):
     channel_videos,channel_ids= get_channel_videos(channel_id)
 
-    channel = Channels.Query.filter(objectId=channel_id)
+    channel = Channels.Query.filter(objectId=channel_id)[0]
 
     return flask.render_template('channel.html',channel_videos=channel_videos,channel=channel)
 

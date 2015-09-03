@@ -48,10 +48,10 @@
   <div class="row">
     <div class="col-md-8 channels">
         
-        <p>Channel Info</p>
         <div>
-          {{channel.name}}
-          {{channel.info}}
+          <img src="{{channel.picture}}" width="100px">
+          <h1>{{channel.name}}</h1>
+          <h5>{{channel.info}}</h5>
         </div>
 
         <p>All Videos</p>
@@ -73,8 +73,9 @@
     </div>
   </div>
 
-  <button id="upload_button" type="button" class="btn btn-primary btn-lg">Upload</button>
-    
+  <a href="/upload">
+    <button id="upload_button" type="button" class="btn btn-primary btn-lg">Upload</button>
+  </a>
         
 
 {% endblock %}
