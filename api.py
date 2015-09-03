@@ -13,6 +13,7 @@ import time
 import json
 from random import randint
 import os
+from cron import manual_scrape,SERVER_URL
 
 parse_credentials = {
     "application_id": "M5tnZk2K6PdF82Ra8485bG2VQwPjpeZLeL96VLPj",
@@ -61,7 +62,8 @@ def channels():
         d['active_users']=randint(0,90)
         d['picture']=i.picture
         f,d['video_ids']= get_channel_videos(i.objectId)
-        a.append(d)
+        if i.active:
+            a.append(d)
 
     return jsonify(data=a)
 
@@ -97,6 +99,12 @@ def dashboard():
     all_channels = Channels.Query.all()
     return flask.render_template('index.html',all_channels=all_channels)
 
+def genFilename(filename):
+    filename.replace(" ","")
+    epoch = str(int(time.time()*100))
+    filename=epoch+filename
+    return filename
+
 @app.route('/upload', methods=['GET','POST'])
 def upload():
     all_channels = Channels.Query.all()
@@ -105,9 +113,14 @@ def upload():
     else:
         file = request.files['file']
         if file:
-            file.save(os.path.join('chestream_raw/', file.filename))
+            filename = genFilename(file.filename)
+            print filename
+            file.save(os.path.join('chestream_raw/', filename))
+
         flash('File was successfully uploaded')
-        return flask.render_template('upload.html',all_channels=all_channels)
+        manual_scrape("%s/chestream_raw/%s"%(SERVER_URL,filename),'Test title')
+        return flask.redirect("%s/chestream_raw/%s"%(SERVER_URL,filename.split('.')[0]))
+        #return flask.render_template('upload.html',all_channels=all_channels)
 
 
 @app.route('/channel/<channel_id>')

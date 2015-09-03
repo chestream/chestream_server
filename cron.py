@@ -14,6 +14,8 @@ import time
 from bs4 import BeautifulSoup
 from random import randint
 import hashlib
+import time
+
 
 MIN_LENGTH=10
 EPOCH = int(time.time())
@@ -71,7 +73,7 @@ def update_parse(objectId,video_m3u8,video_gif,video_thumbnail):
     v.save()
     
 
-def ffmpeg(video_url):
+def ffmpeg(video_url,override_length_check=False):
     video_name = video_url.split('/')[-1]
     video_name=video_name.split('.')[0]
     print video_name
@@ -81,13 +83,14 @@ def ffmpeg(video_url):
     
     print "downloading video file"
     os.system("wget %s -P %s"%(video_url,dir_path))
-
-    print "Checking length of video file"
-    answer = os.popen("%s/get_duration.sh %s/%s.mp4"%(dir_path,dir_path,video_name))
-    length = answer.readlines()[0].strip()
-    if int(length) < MIN_LENGTH:
-        print "Skipping video, length too low"
-        return ""
+    
+    if not override_length_check:
+        print "Checking length of video file"
+        answer = os.popen("%s/get_duration.sh %s/%s.mp4"%(dir_path,dir_path,video_name))
+        length = answer.readlines()[0].strip()
+        if int(length) < MIN_LENGTH:
+            print "Skipping video, length too low"
+            return ""
 
     print "compiling .ts files and generating m3u8"
     if 'https://fo0.blob.core.windows.net' in video_url:
@@ -118,6 +121,25 @@ def ffmpeg(video_url):
     os.system("rm %s/%s.mp4"%(dir_path,video_name))
     return "done"
 
+def manual_scrape(video_url,title):
+    video_name = video_url.split('/')[-1]
+    video_name = video_name.split('.')[0]
+    video_compiled='true'
+    video_m3u8='%s/chestream_raw/%s/playlist.m3u8'%(SERVER_URL,video_name)
+    video_gif ='%s/chestream_raw/%s/video_teaser.gif'%(SERVER_URL,video_name)
+    video_thumbnail ='%s/chestream_raw/%s/thumbnail.png'%(SERVER_URL,video_name)
+    ffmpeg(video_url)
+    try:
+        u = User.signup(username='Chestream',avatar="http://i.imgur.com/nBpMmBF.png", password='12345')
+    except:
+        u = User.login('Chestream',"12345")
+    v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
+                video_gif=video_gif,video_thumbnail=video_thumbnail,\
+                video_m3u8=video_m3u8,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
+                played=False,upvotes=randint(11,80))
+    v.save()
+    #update_parse(video.objectId,video_m3u8,video_gif,video_thumbnail)
+
 def main(n=None):
     all_videos = Videos.Query.all()
     new_videos = [i for i in all_videos if not i.compiled]
@@ -145,9 +167,9 @@ def get_location(lat,long):
 def refresh_parse():
     all_videos = Videos.Query.all()
     for video in all_videos:
+	video.upvotes=randint(10,100)
 	video.played = False
         video.save()
-        
 
 if __name__ == '__main__':
     if 'refresh' == sys.argv[1]:
@@ -167,8 +189,9 @@ if __name__ == '__main__':
         main(n=1)
 
     elif 'test' == sys.argv[1]:
-        scrapeParseYT()
+        manual_scrape("http://104.131.207.33/chestream_raw/gujj3.mp4","Gujarat Riots")
 
     elif 'scrapeParse' == sys.argv[1]:
 	scrapeParseYT()
+
 
