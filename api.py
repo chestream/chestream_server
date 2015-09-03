@@ -13,7 +13,7 @@ import time
 import json
 from random import randint
 import os
-from cron import manual_scrape,SERVER_URL
+from cron import manual_scrape,SERVER_URL,dir_path
 
 parse_credentials = {
     "application_id": "M5tnZk2K6PdF82Ra8485bG2VQwPjpeZLeL96VLPj",
@@ -134,7 +134,11 @@ def channel(channel_id):
 
 
 if __name__ == '__main__':
-    app.secret_key = 'super secret key'
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.run(debug=True,host='0.0.0.0')
+    try:
+        app.secret_key = 'super secret key'
+        app.config['SESSION_TYPE'] = 'filesystem'
+        config['PROPAGATE_EXCEPTIONS'] = True
+        app.run(debug=True,host='0.0.0.0')
+    except Exception:
+        app.logger.exception('Failed')
 
