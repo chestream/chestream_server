@@ -135,7 +135,7 @@ def manual_scrape(video_url,title,channel_id):
         u = User.login('Chestream',"12345")
     v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
                 video_gif=video_gif,video_thumbnail=video_thumbnail,\
-                video_m3u8=video_m3u8,,channel=channel_id,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
+                video_m3u8=video_m3u8,channel=channel_id,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
                 played=False,upvotes=randint(11,80))
     v.save()
     #update_parse(video.objectId,video_m3u8,video_gif,video_thumbnail)
