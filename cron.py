@@ -171,6 +171,7 @@ def refresh_parse():
 	video.played = False
         video.save()
 
+
 if __name__ == '__main__':
     if 'refresh' == sys.argv[1]:
         print "Refreshing parse list"
