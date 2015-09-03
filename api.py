@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import flask, flask.views
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask,flash, render_template, request, redirect, url_for, send_from_directory
 app = Flask(__name__)
 from parse_rest.connection import register
 from parse_rest.datatypes import Object, GeoPoint
@@ -12,6 +12,7 @@ import operator
 import time
 import json
 from random import randint
+import os
 
 parse_credentials = {
     "application_id": "M5tnZk2K6PdF82Ra8485bG2VQwPjpeZLeL96VLPj",
@@ -96,6 +97,19 @@ def dashboard():
     all_channels = Channels.Query.all()
     return flask.render_template('index.html',all_channels=all_channels)
 
+@app.route('/upload', methods=['GET','POST'])
+def upload():
+    all_channels = Channels.Query.all()
+    if request.method=='GET':
+        return flask.render_template('upload.html',all_channels=all_channels)
+    else:
+        file = request.files['file']
+        if file:
+            file.save(os.path.join('chestream_raw/', file.filename))
+        flash('File was successfully uploaded')
+        return flask.render_template('upload.html',all_channels=all_channels)
+
+
 @app.route('/channel/<channel_id>')
 def channel(channel_id):
     channel_videos,channel_ids= get_channel_videos(channel_id)
@@ -107,5 +121,7 @@ def channel(channel_id):
 
 
 if __name__ == '__main__':
+    app.secret_key = 'super secret key'
+    app.config['SESSION_TYPE'] = 'filesystem'
     app.run(debug=True,host='0.0.0.0')
 
