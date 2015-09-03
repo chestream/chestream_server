@@ -121,21 +121,21 @@ def ffmpeg(video_url,override_length_check=False):
     os.system("rm %s/%s.mp4"%(dir_path,video_name))
     return "done"
 
-def manual_scrape(video_url,title):
+def manual_scrape(video_url,title,channel_id):
     video_name = video_url.split('/')[-1]
     video_name = video_name.split('.')[0]
     video_compiled='true'
     video_m3u8='%s/chestream_raw/%s/playlist.m3u8'%(SERVER_URL,video_name)
     video_gif ='%s/chestream_raw/%s/video_teaser.gif'%(SERVER_URL,video_name)
     video_thumbnail ='%s/chestream_raw/%s/thumbnail.png'%(SERVER_URL,video_name)
-    ffmpeg(video_url)
+    ffmpeg(video_url,override_length_check=True)
     try:
         u = User.signup(username='Chestream',avatar="http://i.imgur.com/nBpMmBF.png", password='12345')
     except:
         u = User.login('Chestream',"12345")
     v = Videos(user=u,title=title,url=video_url,user_location="New Delhi",compiled=True,\
                 video_gif=video_gif,video_thumbnail=video_thumbnail,\
-                video_m3u8=video_m3u8,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
+                video_m3u8=video_m3u8,,channel=channel_id,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
                 played=False,upvotes=randint(11,80))
     v.save()
     #update_parse(video.objectId,video_m3u8,video_gif,video_thumbnail)

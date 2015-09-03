@@ -18,6 +18,12 @@
         
         <form action="upload" method="post" enctype="multipart/form-data">
           <input type="file" name="file"><br /><br />
+          <p>Choose Channel</p>
+          <select name="channel_id">
+            {% for channel in all_channels %}
+              <option value="{{channel.objectId}}">{{channel.name}}</option>
+            {% endfor %}
+          </select><br><br>
           <input type="submit" class="btn btn-primary btn-lg" value="Upload">
         </form>
 

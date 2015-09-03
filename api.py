@@ -112,15 +112,15 @@ def upload():
         return flask.render_template('upload.html',all_channels=all_channels)
     else:
         file = request.files['file']
+        channel_id=request.form['channel_id']
         if file:
             filename = genFilename(file.filename)
             print filename
             file.save(os.path.join('chestream_raw/', filename))
 
         flash('File was successfully uploaded')
-        manual_scrape("%s/chestream_raw/%s"%(SERVER_URL,filename),'Test title')
+        manual_scrape("%s/chestream_raw/%s"%(SERVER_URL,filename),'Test title',channel_id=channel_id)
         return flask.redirect("%s/chestream_raw/%s"%(SERVER_URL,filename.split('.')[0]))
-        #return flask.render_template('upload.html',all_channels=all_channels)
 
 
 @app.route('/channel/<channel_id>')
