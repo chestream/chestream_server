@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#from azure.storage import BlobService
+from azure.storage.blob import BlobService
 #import pycps
 import os
 import requests
@@ -11,7 +11,7 @@ from parse_rest.user import User
 import sys
 import urllib2
 import time
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 from random import randint
 import hashlib
 import time
@@ -38,7 +38,9 @@ class ManualVideos(Object):
     pass
 
 #con = pycps.Connection('tcp://cloud-eu-0.clusterpoint.com:9007', 'chestream', 'stomatrix@gmail.com', 'sauravclusterpoint', '1104')
-#blob_service = BlobService(account_name='fo0', account_key='4QX9QsqElWP0Z9KsUWmzpM5tsM1L565VzzZvZxh9qefM6hbOj/ex1Z+0NwZUURnweimZZgzVGe6vAeytDqkVLg==')
+
+blob_service = BlobService(account_name='chestreamraw', account_key='ZzW37B0CbPC8ms99/IgN7Ae4VCx0z9gYtvncJ0GqorFnvbc6GAA6O0Vxrk2dlasiaTmrokxDS3iW5eQ0DEEAfw==')
+
 base_url="https://fo0.blob.core.windows.net/videos/"
 
 fake_users = [
@@ -171,6 +173,11 @@ def refresh_parse():
 	video.played = False
         video.save()
 
+def test_upload():
+    blob_service.create_container('videos', x_ms_blob_public_access='container')
+
+    myblob = open(r'/Users/saurav/Desktop/elon.mp4', 'r').read()
+    blob_service.put_blob('videos', 'file-name', myblob, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='video/mp4')
 
 if __name__ == '__main__':
     if 'refresh' == sys.argv[1]:
@@ -190,7 +197,7 @@ if __name__ == '__main__':
         main(n=1)
 
     elif 'test' == sys.argv[1]:
-        manual_scrape("http://104.131.207.33/chestream_raw/gujj3.mp4","Gujarat Riots")
+        test_upload()
 
     elif 'scrapeParse' == sys.argv[1]:
 	scrapeParseYT()
