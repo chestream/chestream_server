@@ -1,0 +1,4 @@
+Flask
+git+https://github.com/dgrtwo/ParsePy.git
+azure
+azure-storage
