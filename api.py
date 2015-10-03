@@ -72,32 +72,6 @@ def channels():
 
     return jsonify(data=a)
 
-@app.route('/')
-def main():
-    all_videos = Videos.Query.all()
-    eligible_videos = [i for i in all_videos if i.compiled and not i.played]
-    max_upvotes = 0
-
-    for i in eligible_videos:
-        if i.upvotes > max_upvotes:
-            alpha_video = i
-            max_upvotes = i.upvotes
-
-    if not alpha_video:
-        return
-    av = alpha_video
-    video_data = get_dict(title=av.title,\
-    	video_id=av.objectId,\
-	video_gif=av.video_gif,\
-    	url = av.url,\
-    	video_m3u8=av.video_m3u8,\
-    	user_location=av.user_location,\
-    	time_ago='14 minutes ago',\
-    	#user=av.user,\
-    	play_epoch=int(time.time()) + 10
-    )
-
-    return jsonify(data=video_data)
 
 @app.route('/dash')
 def dashboard():
