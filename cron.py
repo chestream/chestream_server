@@ -34,6 +34,9 @@ register(parse_credentials["application_id"], parse_credentials["rest_api_key"])
 class Videos(Object):
     pass
 
+class Channels(Object):
+    pass
+
 class ManualVideos(Object):
     pass
 
@@ -179,6 +182,20 @@ def test_upload():
     myblob = open(r'/Users/saurav/Desktop/elon.mp4', 'r').read()
     blob_service.put_blob('videos', 'file-name', myblob, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='video/mp4')
 
+def test2():
+    #c = Channels(objectId="oBGyLNJd9L")
+    c = Channels.Query.get(objectId="xP5Pexgckt")
+    try:
+        temp_arr = c.video_ids
+        temp_arr.append("c")
+        c.video_ids = temp_arr
+    except:
+        print "empty array"
+        c.video_ids=["c"]
+
+    c.save()
+
+
 if __name__ == '__main__':
     if 'refresh' == sys.argv[1]:
         print "Refreshing parse list"
@@ -197,7 +214,7 @@ if __name__ == '__main__':
         main(n=1)
 
     elif 'test' == sys.argv[1]:
-        test_upload()
+        test2()
 
     elif 'scrapeParse' == sys.argv[1]:
 	scrapeParseYT()

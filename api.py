@@ -79,7 +79,7 @@ def dashboard():
     return flask.render_template('index.html',all_channels=all_channels)
 
 def genFilename(filename):
-    filename.replace(" ","")
+    filename = filename.replace(" ","")
     epoch = str(int(time.time()*100))
     filename=epoch+filename
     return filename
@@ -102,14 +102,13 @@ def upload():
             file.save(os.path.join('chestream_raw/', filename))
         
         os.system("ffmpeg -i chestream_raw/%s -c:v libx264 -c:a copy -b:v 192k -s 640x480 chestream_raw/192_%s"%(filename,filename))
-        os.system("ffmpeg -i chestream_raw/192_%s -vf 'select=gte(n\,10)' -vframes 1 chestream_raw/thumbnail.png"%(filename))
+        os.system("ffmpeg -i chestream_raw/192_%s -vf 'select=gte(n\,10)' -vframes 1 chestream_raw/%s_thumbnail.png"%(filename_wext))
     
-        blob_service.create_container('videos', x_ms_blob_public_access='container')
-    
-        myvideo = open(r'chestream_raw/192_%s'%filename, 'r').read()
-        mythumb = open(r'chestream_raw/thumbnail.png', 'r').read()
-        blob_service.put_blob('videos', filename, myvideo, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='video/mp4')
-        blob_service.put_blob('videos', filename_wext+"_thumb.png", mythumb, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='image/png')
+        #blob_service.create_container('videos', x_ms_blob_public_access='container')
+        #myvideo = open(r'chestream_raw/192_%s'%filename, 'r').read()
+        #mythumb = open(r'chestream_raw/thumbnail.png', 'r').read()
+        #blob_service.put_blob('videos', filename, myvideo, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='video/mp4')
+        #blob_service.put_blob('videos', filename_wext+"_thumb.png", mythumb, x_ms_blob_type='BlockBlob',x_ms_blob_content_type='image/png')
 
         #TODO
         #upload2youtube
@@ -119,17 +118,35 @@ def upload():
         except:
             u = User.login('Chestream',"12345")
         
-        video_url = "https://chestreamraw.blob.core.windows.net/videos/"+filename
-        thumbnail_url = "https://chestreamraw.blob.core.windows.net/videos/%s_thumb.png"%(filename_wext)
+        #video_url = "https://chestreamraw.blob.core.windows.net/videos/"+filename
+        #thumbnail_url = "https://chestreamraw.blob.core.windows.net/videos/%s_thumb.png"%(filename_wext)
+        video_url = "http://orch.in/bytesdump/192_%s"%filename
+        thumbnail_url = "http://orch.in/bytesdump/%s_thumbnail.png"%filename_wext
+
+        c = Channels.Query.get(objectId=channel_id)
 
         v = Videos(user=u,title=video_title,url=video_url,user_location="New Delhi",compiled=True,\
                 video_gif="",video_thumbnail=thumbnail_url,\
-                video_m3u8="",channel=channel_id,user_name="Chestream",user_avatar="http://i.imgur.com/nBpMmBF.png",\
+                video_m3u8="",channel=channel_id,user_name=c.name,user_avatar=c.picture,\
                 played=False,upvotes=randint(11,80))
         v.save()
+        
 
-        os.system("rm chestream_raw/*.mp4")
-        os.system("rm chestream_raw/*.png")
+        try:
+            temp_arr = c.video_ids
+            temp_arr.append(v.objectId)
+            c.video_ids = temp_arr
+        except:
+            #video_ids is empty
+            c.video_ids=[v.objectId]
+
+        c.active_users= randint(11,50)
+        c.active=True
+        c.nonSynchronous=True
+        c.save()
+
+        #os.system("rm chestream_raw/*.mp4")
+        #os.system("rm chestream_raw/*.png")
         
         return flask.render_template('upload.html',all_channels=all_channels)
 
