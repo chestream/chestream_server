@@ -102,8 +102,8 @@ def upload():
             file.save(os.path.join('chestream_raw/', filename))
         
         os.system("ffmpeg -i chestream_raw/%s -vcodec libx264 -acodec copy -b:v 192k -s 640x480 chestream_raw/192_%s"%(filename,filename))
-        os.system("ffmpeg -i chestream_raw/192_%s -vf 'select=gte(n\,10)' -vframes 1 chestream_raw/%s_thumbnail.png"%(filename_wext))
-    
+        os.system("ffmpeg -i chestream_raw/192_%s -vf 'select=gte(n\,10)' -vframes 1 chestream_raw/%s_thumbnail.png"%(filename,filename_wext))
+
         #blob_service.create_container('videos', x_ms_blob_public_access='container')
         #myvideo = open(r'chestream_raw/192_%s'%filename, 'r').read()
         #mythumb = open(r'chestream_raw/thumbnail.png', 'r').read()
